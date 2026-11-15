@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestão de Risco e Stop Loss Cripto — InvestCalc</title>
+    <title>Calculadora de Preço Médio B3 — InvestCalc</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -13,53 +13,50 @@
         <nav>
             <a href="index.html" class="tab-btn">Início</a>
             <a href="renda-fixa.html" class="tab-btn">Renda Fixa</a>
-            <a href="bolsa.html" class="tab-btn">Bolsa</a>
-            <a href="cripto.html" class="tab-btn active">Cripto</a>
+            <a href="bolsa.html" class="tab-btn active">Bolsa</a>
+            <a href="cripto.html" class="tab-btn">Cripto</a>
         </nav>
     </header>
 
     <main>
         <div class="card">
-            <h2>Gestão de Risco e Alvos (Cripto / Trade)</h2>
-            <p class="subtitle">Calcule seu lucro potencial, risco máximo no Stop Loss e a relação Risco x Retorno antes de abrir a ordem.</p>
-
+            <h2>Calculadora de Preço Médio (B3)</h2>
+            <p class="subtitle">Descubra o novo preço médio da sua posição ao realizar uma nova compra de ações ou FIIs.</p>
+            
             <div class="form-grid">
                 <div class="form-group">
-                    <label for="cripto-capital">Valor Investido na Operação (R$ ou US$)</label>
-                    <input type="number" id="cripto-capital" value="1000" step="10" oninput="calcularRiscoCripto()">
+                    <label for="qtde-atual">Quantidade Atual de Cotas/Ações</label>
+                    <input type="number" id="qtde-atual" value="100" oninput="calcularPrecoMedio()">
                 </div>
                 <div class="form-group">
-                    <label for="cripto-entrada">Preço de Entrada do Ativo</label>
-                    <input type="number" id="cripto-entrada" value="100" step="0.01" oninput="calcularRiscoCripto()">
+                    <label for="pm-atual">Preço Médio Atual (R$)</label>
+                    <input type="number" id="pm-atual" value="25.50" step="0.01" oninput="calcularPrecoMedio()">
                 </div>
             </div>
 
             <div class="form-grid">
                 <div class="form-group">
-                    <label for="cripto-alvo">Preço Alvo — Take Profit (Lucro)</label>
-                    <input type="number" id="cripto-alvo" value="130" step="0.01" oninput="calcularRiscoCripto()">
+                    <label for="qtde-nova">Quantidade da Nova Compra</label>
+                    <input type="number" id="qtde-nova" value="50" oninput="calcularPrecoMedio()">
                 </div>
                 <div class="form-group">
-                    <label for="cripto-stop">Preço de Saída — Stop Loss (Prejuízo)</label>
-                    <input type="number" id="cripto-stop" value="90" step="0.01" oninput="calcularRiscoCripto()">
+                    <label for="preco-novo">Preço da Nova Compra (R$)</label>
+                    <input type="number" id="preco-novo" value="22.00" step="0.01" oninput="calcularPrecoMedio()">
                 </div>
             </div>
 
             <div class="results-grid">
                 <div class="result-item">
-                    <div class="result-label">Lucro Potencial (Alvo)</div>
-                    <div class="result-value" id="res-cripto-lucro" style="color: var(--success);">+ 0,00</div>
-                    <div class="result-sub" id="res-cripto-lucro-pct">+0,00%</div>
+                    <div class="result-label">Nova Quantidade Total</div>
+                    <div class="result-value" id="res-qtde-total" style="color: var(--text-primary);">0</div>
                 </div>
                 <div class="result-item">
-                    <div class="result-label">Risco Máximo (Stop Loss)</div>
-                    <div class="result-value" id="res-cripto-risco" style="color: var(--danger);">- 0,00</div>
-                    <div class="result-sub" id="res-cripto-risco-pct">-0,00%</div>
+                    <div class="result-label">Novo Preço Médio</div>
+                    <div class="result-value" id="res-novo-pm">R$ 0,00</div>
                 </div>
                 <div class="result-item">
-                    <div class="result-label">Relação Risco x Retorno</div>
-                    <div class="result-value" id="res-cripto-rr">1 : 0.0</div>
-                    <div class="result-sub" id="res-cripto-status">Analisando operação...</div>
+                    <div class="result-label">Valor Total Investido</div>
+                    <div class="result-value" id="res-patrimonio-bolsa" style="color: var(--text-primary);">R$ 0,00</div>
                 </div>
             </div>
         </div>
@@ -70,53 +67,27 @@
     </footer>
 
     <script>
-        const formatter = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const currencyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
-        function calcularRiscoCripto() {
-            const capital = parseFloat(document.getElementById('cripto-capital').value) || 0;
-            const entrada = parseFloat(document.getElementById('cripto-entrada').value) || 0;
-            const alvo = parseFloat(document.getElementById('cripto-alvo').value) || 0;
-            const stop = parseFloat(document.getElementById('cripto-stop').value) || 0;
+        function calcularPrecoMedio() {
+            const qtdeAtual = parseFloat(document.getElementById('qtde-atual').value) || 0;
+            const pmAtual = parseFloat(document.getElementById('pm-atual').value) || 0;
+            const qtdeNova = parseFloat(document.getElementById('qtde-nova').value) || 0;
+            const precoNovo = parseFloat(document.getElementById('preco-novo').value) || 0;
 
-            if (entrada <= 0) return;
+            const custoAtual = qtdeAtual * pmAtual;
+            const custoNovo = qtdeNova * precoNovo;
+            
+            const qtdeTotal = qtdeAtual + qtdeNova;
+            const custoTotal = custoAtual + custoNovo;
+            const novoPm = qtdeTotal > 0 ? custoTotal / qtdeTotal : 0;
 
-            const variacaoLucroPct = ((alvo - entrada) / entrada) * 100;
-            const variacaoRiscoPct = ((entrada - stop) / entrada) * 100;
-
-            const valorLucro = capital * (variacaoLucroPct / 100);
-            const valorRisco = capital * (variacaoRiscoPct / 100);
-
-            document.getElementById('res-cripto-lucro').innerText = `+ ${formatter.format(Math.max(0, valorLucro))}`;
-            document.getElementById('res-cripto-lucro-pct').innerText = `+${formatter.format(Math.max(0, variacaoLucroPct))}% de valorização`;
-
-            document.getElementById('res-cripto-risco').innerText = `- ${formatter.format(Math.max(0, valorRisco))}`;
-            document.getElementById('res-cripto-risco-pct').innerText = `-${formatter.format(Math.max(0, variacaoRiscoPct))}% de queda`;
-
-            const rrElement = document.getElementById('res-cripto-rr');
-            const statusElement = document.getElementById('res-cripto-status');
-
-            if (valorRisco > 0 && valorLucro > 0) {
-                const ratio = valorLucro / valorRisco;
-                rrElement.innerText = `1 : ${ratio.toFixed(2)}`;
-
-                if (ratio >= 2) {
-                    rrElement.style.color = 'var(--success)';
-                    statusElement.innerText = 'Excelente assimetria (≥ 1:2)';
-                } else if (ratio >= 1) {
-                    rrElement.style.color = 'var(--warning)';
-                    statusElement.innerText = 'Assimetria moderada';
-                } else {
-                    rrElement.style.color = 'var(--danger)';
-                    statusElement.innerText = 'Risco maior que o retorno';
-                }
-            } else {
-                rrElement.innerText = '1 : 0.00';
-                rrElement.style.color = 'var(--text-secondary)';
-                statusElement.innerText = 'Verifique se Alvo > Entrada > Stop';
-            }
+            document.getElementById('res-qtde-total').innerText = qtdeTotal.toLocaleString('pt-BR');
+            document.getElementById('res-novo-pm').innerText = currencyFormatter.format(novoPm);
+            document.getElementById('res-patrimonio-bolsa').innerText = currencyFormatter.format(custoTotal);
         }
 
-        window.onload = calcularRiscoCripto;
+        window.onload = calcularPrecoMedio;
     </script>
 </body>
 </html>
