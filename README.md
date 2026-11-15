@@ -1,2 +1,0 @@
-# Invescalc
-Investments Calculator
