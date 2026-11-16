@@ -242,4 +242,81 @@
                     <td>R$ ${item.close.toFixed(2).replace('.', ',')}</td>
                     <td class="${classeCor}">${sinal}${item.change.toFixed(2)}%</td>
                 `;
-                tbody.appendChild(
+                tbody.appendChild(tr);
+            });
+        }
+
+        // 3. Carregar Gráfico dos últimos dias de uma ação específica
+        async function carregarGraficoAcao(ticker) {
+            tickerSelecionado = ticker;
+            document.getElementById('titulo-grafico-b3').innerText = `Desempenho: ${ticker} (Últimos dias)`;
+
+            try {
+                // Busca histórico de 1 mês (range=1mo, interval=1d)
+                const response = await fetch(`https://brapi.dev/api/quote/${ticker}?range=1mo&interval=1d`);
+                const data = await response.json();
+
+                if (!data.results || !data.results[0].historicalDataPrice) return;
+
+                const historico = data.results[0].historicalDataPrice.slice(-15); // Últimos 15 pregões
+
+                const labels = historico.map(d => {
+                    const date = new Date(d.date * 1000);
+                    return `${date.getDate()}/${date.getMonth() + 1}`;
+                });
+
+                const valores = historico.map(d => d.close);
+
+                const ctx = document.getElementById('graficoB3').getContext('2d');
+                if (graficoB3Instance) graficoB3Instance.destroy();
+
+                const corLinha = valores[valores.length - 1] >= valores[0] ? '#10b981' : '#ef4444';
+                const corFundo = valores[valores.length - 1] >= valores[0] ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)';
+
+                graficoB3Instance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: `Fechamento ${ticker} (R$)`,
+                            data: valores,
+                            borderColor: corLinha,
+                            backgroundColor: corFundo,
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.25,
+                            pointRadius: 3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
+                            y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }
+                        }
+                    }
+                });
+
+            } catch (error) {
+                console.error(`Erro ao carregar gráfico de ${ticker}:`, error);
+            }
+        }
+
+        // Inicialização e atualização automática a cada 2 minutos
+        window.onload = function() {
+            calcularPrecoMedio();
+            carregarMercadoB3();
+            carregarGraficoAcao(tickerSelecionado);
+
+            setInterval(() => {
+                carregarMercadoB3();
+                carregarGraficoAcao(tickerSelecionado);
+            }, 120000); // Atualiza a cada 2 minutos
+        };
+    </script>
+</body>
+</html>
