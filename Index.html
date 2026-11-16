@@ -29,13 +29,63 @@
         }
         .ticker-up { color: var(--success); font-weight: 600; }
         .ticker-down { color: var(--danger); font-weight: 600; }
+   /* Barra de Cotações Deslizante (Ticker) */
+.ticker-container {
+    background-color: var(--bg-color);
+    border-bottom: 1px solid var(--border);
+    padding: 0.6rem 0;
+    overflow: hidden;
+    white-space: nowrap;
+    position: relative;
+    width: 100%;
+}
+
+.ticker-track {
+    display: inline-flex;
+    gap: 3rem;
+    animation: scrollTicker 30s linear infinite;
+}
+
+/* Pausa a rolagem quando o mouse está em cima para facilitar a leitura */
+.ticker-container:hover .ticker-track {
+    animation-play-state: paused;
+}
+
+@keyframes scrollTicker {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+.ticker-item {
+    display: inline-flex;
+    gap: 0.5rem;
+    align-items: center;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.ticker-value {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.ticker-up { color: var(--success); font-weight: 600; }
+.ticker-down { color: var(--danger); font-weight: 600; }
+            
     </style>
 </head>
 <body>
 
-    <!-- Faixa de Cotações Rápidas ao Vivo -->
-    <div class="ticker-bar" id="ticker-bar">
-        <div class="ticker-item"><span>Carregando mercado...</span></div>
+        <!-- Faixa de Cotações Deslizante ao Vivo -->
+    <div class="ticker-container">
+        <div class="ticker-track" id="ticker-track">
+            <!-- Os itens serão duplicados via JavaScript para criar o looping infinito perfeito -->
+            <div class="ticker-item"><span>Carregando indicadores do mercado...</span></div>
+        </div>
     </div>
 
     <header>
