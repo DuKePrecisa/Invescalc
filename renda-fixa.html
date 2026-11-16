@@ -3,8 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulador de Renda Fixa e Juros Compostos — InvestCalc</title>
+    <title>Simulador de Renda Fixa e Comparador — InvestCalc</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        .indices-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .indice-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+        }
+        .indice-title {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.25rem;
+        }
+        .indice-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        .indice-sub {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+        .comp-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+        }
+        .comp-table th {
+            text-align: left;
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+        .comp-table td {
+            padding: 0.85rem 0.75rem;
+            border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+        }
+        .badge-isento {
+            background-color: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge-ir {
+            background-color: rgba(245, 158, 11, 0.15);
+            color: var(--warning);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+    </style>
 </head>
 <body>
 
@@ -19,9 +83,74 @@
     </header>
 
     <main>
+        <!-- PAINEL DE ÍNDICES EM TEMPO REAL -->
+        <div style="margin-bottom: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                <h3 style="font-size: 1rem; color: var(--text-primary);">Taxas e Indicadores de Referência</h3>
+                <span id="status-indices" style="font-size: 0.75rem; color: var(--text-secondary);">Atualizando...</span>
+            </div>
+            
+            <div class="indices-grid">
+                <div class="indice-card">
+                    <div class="indice-title">Taxa Selic</div>
+                    <div class="indice-value" id="val-selic">11.25% a.a.</div>
+                    <div class="indice-sub">Meta oficial BCB</div>
+                </div>
+                <div class="indice-card">
+                    <div class="indice-title">CDI Atual</div>
+                    <div class="indice-value" id="val-cdi">11.15% a.a.</div>
+                    <div class="indice-sub">Base CDB / RDB / LCI</div>
+                </div>
+                <div class="indice-card">
+                    <div class="indice-title">IPCA (12m)</div>
+                    <div class="indice-value" id="val-ipca">4.50% a.a.</div>
+                    <div class="indice-sub">Inflação oficial IBGE</div>
+                </div>
+                <div class="indice-card">
+                    <div class="indice-title">Poupança</div>
+                    <div class="indice-value" id="val-poupanca">6.17% + TR</div>
+                    <div class="indice-sub">Isenta de IR</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BLOCO 1: COMPARADOR AUTOMÁTICO CDB, RDB, TESOURO E LCI -->
+        <div class="card" style="margin-bottom: 2rem;">
+            <h2>Comparador: Tesouro Selic vs. CDB / RDB vs. LCI / LCA</h2>
+            <p class="subtitle">Veja quanto seu dinheiro rende líquido (já descontando o Imposto de Renda) usando as taxas atuais do mercado.</p>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="comp-valor">Valor para investir (R$)</label>
+                    <input type="number" id="comp-valor" value="5000" step="100" oninput="calcularComparador()">
+                </div>
+                <div class="form-group">
+                    <label for="comp-meses">Prazo do investimento (meses)</label>
+                    <input type="number" id="comp-meses" value="12" min="1" max="120" oninput="calcularComparador()">
+                </div>
+            </div>
+
+            <div style="overflow-x: auto;">
+                <table class="comp-table">
+                    <thead>
+                        <tr>
+                            <th>Investimento</th>
+                            <th>Rentabilidade Base</th>
+                            <th>Imposto de Renda</th>
+                            <th>Valor Final Líquido</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-comparador">
+                        <!-- Preenchido automaticamente pelo JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- BLOCO 2: SIMULADOR DE JUROS COMPOSTOS COM APORTES -->
         <div class="card">
-            <h2>Simulador de Crescimento de Patrimônio</h2>
-            <p class="subtitle">Projete o impacto dos aportes mensais e juros compostos ao longo dos anos.</p>
+            <h2>Simulador de Longo Prazo (Com Aportes Mensais)</h2>
+            <p class="subtitle">Projete o crescimento do seu patrimônio guardando todo mês.</p>
             
             <div class="form-grid">
                 <div class="form-group">
@@ -37,7 +166,7 @@
             <div class="form-grid">
                 <div class="form-group">
                     <label for="rate">Rendimento anual estimado (%)</label>
-                    <input type="number" id="rate" value="10" step="0.5" oninput="calcularJuros()">
+                    <input type="number" id="rate" value="11" step="0.5" oninput="calcularJuros()">
                 </div>
                 <div class="form-group">
                     <label for="years">Prazo (anos)</label>
@@ -63,12 +192,118 @@
     </main>
 
     <footer>
-        &copy; 2026 InvestCalc — Simplicidade e precisão para suas decisões financeiras.
+        &copy; 2026 InvestCalc — Taxas atualizadas via BrasilAPI / Banco Central.
     </footer>
 
     <script>
         const currencyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+        
+        // Variáveis globais que armazenam as taxas reais da internet (com fallback seguro)
+        let taxaSelicAtual = 11.25;
+        let taxaCdiAtual = 11.15;
 
+        // 1. Buscar Indicadores Econômicos em Tempo Real
+        async function carregarIndicesEconomicos() {
+            try {
+                const response = await fetch('https://brasilapi.com.br/api/taxas/v1');
+                const taxas = await response.json();
+
+                taxas.forEach(t => {
+                    if (t.nome.toLowerCase().includes('selic')) {
+                        taxaSelicAtual = t.valor;
+                        document.getElementById('val-selic').innerText = `${t.valor.toFixed(2)}% a.a.`;
+                    }
+                    if (t.nome.toLowerCase().includes('cdi')) {
+                        taxaCdiAtual = t.valor;
+                        document.getElementById('val-cdi').innerText = `${t.valor.toFixed(2)}% a.a.`;
+                    }
+                    if (t.nome.toLowerCase().includes('ipca')) {
+                        document.getElementById('val-ipca').innerText = `${t.valor.toFixed(2)}% a.a.`;
+                    }
+                });
+
+                document.getElementById('status-indices').innerText = `Atualizado às ${new Date().toLocaleTimeString('pt-BR')}`;
+                
+                // Recalcula o comparador com as taxas reais obtidas
+                calcularComparador();
+            } catch (error) {
+                console.error("Erro ao buscar índices:", error);
+                document.getElementById('status-indices').innerText = "Usando taxas de referência";
+                calcularComparador();
+            }
+        }
+
+        // 2. Motor do Comparador (Tesouro, CDB, RDB, LCI e Poupança)
+        function calcularComparador() {
+            const valor = parseFloat(document.getElementById('comp-valor').value) || 0;
+            const meses = parseInt(document.getElementById('comp-meses').value) || 1;
+            const dias = meses * 30;
+
+            // Tabela regressiva do IR
+            let aliquotaIR = 0.15;
+            let textoIR = "15% (acima de 2 anos)";
+            if (dias <= 180) { aliquotaIR = 0.225; textoIR = "22,5% (até 6 meses)"; }
+            else if (dias <= 360) { aliquotaIR = 0.20; textoIR = "20% (6m a 1 ano)"; }
+            else if (dias <= 720) { aliquotaIR = 0.175; textoIR = "17,5% (1 a 2 anos)"; }
+
+            // Definição dos produtos financeiros
+            const produtos = [
+                {
+                    nome: "CDB / RDB (100% CDI)",
+                    detalhe: `100% do CDI (${taxaCdiAtual.toFixed(2)}% a.a.)`,
+                    taxaAnual: taxaCdiAtual,
+                    isento: false
+                },
+                {
+                    nome: "CDB Promocional (110% CDI)",
+                    detalhe: `110% do CDI (${(taxaCdiAtual * 1.1).toFixed(2)}% a.a.)`,
+                    taxaAnual: taxaCdiAtual * 1.1,
+                    isento: false
+                },
+                {
+                    nome: "Tesouro Selic",
+                    detalhe: `100% Selic (${taxaSelicAtual.toFixed(2)}% a.a.)`,
+                    taxaAnual: taxaSelicAtual,
+                    isento: false
+                },
+                {
+                    nome: "LCI / LCA (90% CDI)",
+                    detalhe: `90% do CDI (${(taxaCdiAtual * 0.9).toFixed(2)}% a.a.)`,
+                    taxaAnual: taxaCdiAtual * 0.9,
+                    isento: true
+                },
+                {
+                    nome: "Poupança",
+                    detalhe: "6,17% a.a. + TR",
+                    taxaAnual: 6.17,
+                    isento: true
+                }
+            ];
+
+            const tbody = document.getElementById('tabela-comparador');
+            tbody.innerHTML = '';
+
+            produtos.forEach(prod => {
+                // Converte taxa anual para mensal composta
+                const taxaMensal = Math.pow(1 + (prod.taxaAnual / 100), 1 / 12) - 1;
+                const montanteBruto = valor * Math.pow(1 + taxaMensal, meses);
+                const lucroBruto = montanteBruto - valor;
+                
+                const descontoIR = prod.isento ? 0 : (lucroBruto * aliquotaIR);
+                const montanteLiquido = montanteBruto - descontoIR;
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${prod.nome}</strong></td>
+                    <td style="color: var(--text-secondary);">${prod.detalhe}</td>
+                    <td>${prod.isento ? '<span class="badge-isento">Isento de IR</span>' : `<span class="badge-ir">${textoIR}</span>`}</td>
+                    <td style="font-weight: 700; color: var(--success);">${currencyFormatter.format(montanteLiquido)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // 3. Simulador de Longo Prazo com Aportes
         function calcularJuros() {
             const initial = parseFloat(document.getElementById('initial').value) || 0;
             const monthly = parseFloat(document.getElementById('monthly').value) || 0;
@@ -94,7 +329,10 @@
             document.getElementById('res-total').innerText = currencyFormatter.format(total);
         }
 
-        window.onload = calcularJuros;
+        window.onload = function() {
+            carregarIndicesEconomicos();
+            calcularJuros();
+        };
     </script>
 </body>
 </html>
