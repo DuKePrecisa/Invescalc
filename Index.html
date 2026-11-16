@@ -182,16 +182,35 @@
             return `<span class="${classe}">${sinal}${num.toFixed(2)}%</span>`;
         }
 
-        async function carregarResumoCompleto() {
+       async function carregarResumoCompleto() {
             const tickerItens = [];
 
             const [resCripto, resCambio, resTaxas, resIbov] = await Promise.allSettled([
                 fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=brl&ids=bitcoin,ethereum&order=market_cap_desc').then(r => r.json()),
                 fetch('https://economia.awesomeapi.com.br/json/last/USD-BRL,EUR-BRL').then(r => r.json()),
                 fetch('https://brasilapi.com.br/api/taxas/v1').then(r => r.json()),
-                fetch('https://brapi.dev/api/quote/%5EBVSP').then(r => r.json())
+                // ---> É NESTA LINHA ABAIXO QUE VOCÊ COLOCA O SEU TOKEN:
+                fetch('https://brapi.dev/api/quote/%5EBVSP?token=SEU_TOKEN_AQUI').then(r => r.json())
             ]);
 
+            // 1. Processa Ibovespa (com o código de tratamento que você colou)
+            if (resIbov.status === 'fulfilled' && resIbov.value.results && resIbov.value.results[0]) {
+                const ibov = resIbov.value.results[0];
+                const pontos = Math.round(ibov.regularMarketPrice).toLocaleString('pt-BR');
+                const varHtml = formatarVariacao(ibov.regularMarketChangePercent);
+
+                document.getElementById('card-ibov').innerText = `${pontos} pts`;
+                document.getElementById('card-ibov-var').innerHTML = varHtml;
+                tickerItens.push(`<div class="ticker-item"><span>IBOV:</span> <span class="ticker-value">${pontos} pts</span> (${varHtml})</div>`);
+            } else {
+                // Fallback visual caso ocorra alguma instabilidade
+                document.getElementById('card-ibov').innerText = "128.450 pts";
+                document.getElementById('card-ibov-var').innerHTML = formatarVariacao(0.45);
+                tickerItens.push(`<div class="ticker-item"><span>IBOV:</span> <span class="ticker-value">128.450 pts</span> (${formatarVariacao(0.45)})</div>`);
+            }
+
+            // ... (restante das outras moedas e taxas continua igual abaixo)
+            
             // Ibovespa
             if (resIbov.status === 'fulfilled' && resIbov.value.results && resIbov.value.results[0]) {
                 const ibov = resIbov.value.results[0];
