@@ -264,64 +264,44 @@
         // 3. Carregar Gráfico com tratamento de feedback visual ao clicar
         async function carregarGraficoAcao(ticker) {
             tickerSelecionado = ticker;
-            document.getElementById('titulo-grafico-b3').innerText = `Desempenho: ${ticker} (Carregando histórico...)`;
-            document.getElementById('status-grafico').innerText = "Buscando dados...";
+            document.getElementById('titulo-grafico-b3').innerText = `Desempenho: ${ticker} (Carregando...)`;
+            document.getElementById('status-grafico').innerText = "Sincronizando...";
 
             try {
-                // Antes:
-                // const response = await fetch(`https://brapi.dev/api/quote/${ticker}?range=1mo&interval=1d&token=SEU_TOKEN`);
-                // Agora:
                 const response = await fetch(`/api/quote?ticker=${ticker}&range=1mo&interval=1d`);
-                const data = await response.json();
+                if (!response.ok) throw new Error("Erro na resposta do servidor");
 
-                if (!data.results || !data.results[0].historicalDataPrice) {
-                    throw new Error("Histórico indisponível");
+                const data = await response.json();
+                
+                // Identifica onde o histórico está no JSON retornado
+                const resultadoObj = data.results ? data.results[0] : data;
+                const historico = resultadoObj.historicalDataPrice || resultadoObj.history;
+
+                if (!historico || historico.length === 0) {
+                    throw new Error("Histórico indisponível para este ativo");
                 }
 
-                const historico = data.results[0].historicalDataPrice.slice(-15);
-
-                const labels = historico.map(d => {
-                    const date = new Date(d.date * 1000);
+                const ultimos15 = historico.slice(-15);
+                const labels = ultimos15.map(d => {
+                    // Trata data em timestamp (segundos ou milissegundos) ou string
+                    const timestamp = d.date > 10000000000 ? d.date : d.date * 1000;
+                    const date = new Date(timestamp);
                     return `${date.getDate()}/${date.getMonth() + 1}`;
                 });
 
-                const valores = historico.map(d => d.close);
+                const valores = ultimos15.map(d => d.close || d.adjClose);
 
                 document.getElementById('titulo-grafico-b3').innerText = `Desempenho: ${ticker} (Últimos dias)`;
-                document.getElementById('status-grafico').innerText = "Atualizado";
+                document.getElementById('status-grafico').innerText = "Histórico B3 Real";
 
-                const ctx = document.getElementById('graficoB3').getContext('2d');
-                if (graficoB3Instance) graficoB3Instance.destroy();
+                desenharGrafico(ticker, labels, valores);
 
-                const corLinha = valores[valores.length - 1] >= valores[0] ? '#10b981' : '#ef4444';
-                const corFundo = valores[valores.length - 1] >= valores[0] ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)';
-
-                graficoB3Instance = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: `Fechamento ${ticker} (R$)`,
-                            data: valores,
-                            borderColor: corLinha,
-                            backgroundColor: corFundo,
-                            borderWidth: 2,
-                            fill: true,
-                            tension: 0.25,
-                            pointRadius: 3
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false }
-                        },
-                        scales: {
-                            x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
-                            y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }
-                        }
-                    }
+            } catch (error) {
+                console.error(`Erro ao carregar gráfico de ${ticker}:`, error);
+                document.getElementById('titulo-grafico-b3').innerText = `Desempenho: ${ticker} (Dados indisponíveis)`;
+                document.getElementById('status-grafico').innerText = "Falha ao carregar";
+            }
+        }
                 });
 
             } catch (error) {
