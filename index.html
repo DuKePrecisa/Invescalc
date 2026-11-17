@@ -192,7 +192,12 @@
                 fetch('https://brasilapi.com.br/api/taxas/v1').then(r => r.json()),
                 // fetch('https://brapi.dev/api/quote/%5EBVSP?token=SEU_TOKEN')
                // Agora (100% seguro via servidor do Cloudflare):
-               fetch('/api/quote?ticker=%5EBVSP').then(r => r.json())
+               fetch('/api/quote?ticker=%5EBVSP')
+                .then(r => r.json())
+                .then(data => {
+               // seu código de processamento do ibov
+            })
+                .catch(err => console.error("Erro no IBOV:", err));
             ]);
 
             // 1. Processa Ibovespa (com o código de tratamento que você colou)
