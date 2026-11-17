@@ -10,11 +10,11 @@ export async function onRequest(context) {
     });
   }
 
-  // Pega o token seguro armazenado nas variáveis de ambiente do Cloudflare
   const token = env.BRAPI_TOKEN || '';
   
-  // Monta a URL de chamada para a Brapi com o token embutido no servidor
-  const brapiUrl = `https://brapi.dev/api/quote/${encodeURIComponent(ticker)}?token=${token}`;
+  // Copia todos os parâmetros recebidos da URL (como range e interval) e adiciona o token de forma segura
+  url.searchParams.set('token', token);
+  const brapiUrl = `https://brapi.dev/api/quote/${encodeURIComponent(ticker)}?${url.searchParams.toString()}`;
 
   try {
     const apiResponse = await fetch(brapiUrl);
@@ -24,7 +24,7 @@ export async function onRequest(context) {
       status: apiResponse.status,
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*' // Permite o acesso do próprio site
+        'Access-Control-Allow-Origin': '*'
       }
     });
   } catch (error) {
