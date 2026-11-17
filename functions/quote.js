@@ -25,7 +25,7 @@ export async function onRequest(context) {
       headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*'
-      }
+       }
     });
   } catch (error) {
     return new Response(JSON.stringify({ error: 'Erro ao consultar a API' }), {
