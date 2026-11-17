@@ -189,8 +189,9 @@
                 fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=brl&ids=bitcoin,ethereum&order=market_cap_desc').then(r => r.json()),
                 fetch('https://economia.awesomeapi.com.br/json/last/USD-BRL,EUR-BRL').then(r => r.json()),
                 fetch('https://brasilapi.com.br/api/taxas/v1').then(r => r.json()),
-                // ---> É NESTA LINHA ABAIXO QUE VOCÊ COLOCA O SEU TOKEN:
-                fetch('https://brapi.dev/api/quote/%5EBVSP?token=SEU_TOKEN_AQUI').then(r => r.json())
+                // fetch('https://brapi.dev/api/quote/%5EBVSP?token=SEU_TOKEN')
+               // Agora (100% seguro via servidor do Cloudflare):
+               fetch('/api/quote?ticker=%5EBVSP').then(r => r.json())
             ]);
 
             // 1. Processa Ibovespa (com o código de tratamento que você colou)
