@@ -114,6 +114,9 @@
         <div class="card">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                 <div>
+                      <button onclick="abrirModalTodasAcoes()" class="btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.4rem; cursor: pointer;">
+                        <i data-lucide="grid" style="width: 16px; height: 16px;"></i> Ver Todas as Ações da B3
+                      </button>
                     <h2 style="display: inline-block; margin-right: 1rem;">Radar da Bolsa (B3)</h2>
                     <span id="status-b3" style="font-size: 0.85rem; color: var(--accent); font-weight: 600;">Atualizando dados...</span>
                 </div>
@@ -178,6 +181,74 @@
         const currencyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
         let graficoB3Instance = null;
         let tickerSelecionado = 'PETR4';
+
+        let listaGlobalCompleta = [];
+
+        async function abrirModalTodasAcoes() {
+            const modal = document.getElementById('modal-todas-acoes');
+            modal.style.display = 'flex';
+
+            if (listaGlobalCompleta.length > 0) return; // Já carregou antes
+
+            try {
+                // Busca um limite maior de ações na Brapi (ex: 300 ativos)
+                const response = await fetch('https://brapi.dev/api/quote/list?limit=300');
+                const data = await response.json();
+                
+                listaGlobalCompleta = data.stocks || data.results || [];
+                renderizarTabelaModal(listaGlobalCompleta);
+            } catch (error) {
+                console.error("Erro ao carregar lista completa:", error);
+                document.getElementById('tabela-todas-acoes-modal').innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--danger);">Erro ao carregar dados da B3.</td></tr>`;
+            }
+        }
+
+        function fecharModalTodasAcoes() {
+            document.getElementById('modal-todas-acoes').style.display = 'none';
+        }
+
+        function renderizarTabelaModal(acoes) {
+            const tbody = document.getElementById('tabela-todas-acoes-modal');
+            tbody.innerHTML = '';
+
+            if (acoes.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-secondary);">Nenhuma ação encontrada.</td></tr>`;
+                return;
+            }
+
+            acoes.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.style.cursor = 'pointer';
+                
+                // Ao clicar em qualquer ação da lista geral, ela fecha o modal e carrega o gráfico dela automaticamente!
+                tr.addEventListener('click', () => {
+                    carregarGraficoAcao(item.stock);
+                    fecharModalTodasAcoes();
+                });
+
+                const preco = item.close ? `R$ ${item.close.toFixed(2).replace('.', ',')}` : 'R$ --';
+                const variacaoVal = item.change || 0;
+                const sinal = variacaoVal >= 0 ? '+' : '';
+                const classeCor = variacaoVal >= 0 ? 'badge-up' : 'badge-down';
+
+                tr.innerHTML = `
+                    <td><strong>${item.stock}</strong></td>
+                    <td style="color: var(--text-secondary);">${item.name || '-'}</td>
+                    <td>${preco}</td>
+                    <td class="${classeCor}">${sinal}${variacaoVal.toFixed(2)}%</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function filtrarListaModal() {
+            const termo = document.getElementById('filtro-acoes-modal').value.toLowerCase();
+            const filtradas = listaGlobalCompleta.filter(item => 
+                (item.stock && item.stock.toLowerCase().includes(termo)) || 
+                (item.name && item.name.toLowerCase().includes(termo))
+            );
+            renderizarTabelaModal(filtradas);
+        }
 
         // 1. Motor Matemático de Preço Médio
         function calcularPrecoMedio() {
@@ -345,5 +416,43 @@
             }, 120000);
         };
     </script>
+    <!-- MODAL DE TODAS AS AÇÕES DA B3 -->
+<div id="modal-todas-acoes" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.85); z-index: 1000; justify-content: center; align-items: center; padding: 1rem;">
+    <div style="background-color: var(--bg-color); border: 1px solid var(--border); border-radius: 12px; width: 100%; max-width: 800px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);">
+        
+        <!-- Cabeçalho do Modal -->
+        <div style="padding: 1.25rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0; font-size: 1.2rem; color: var(--text-primary);">Todas as Ações Negociadas na B3</h3>
+            <button onclick="fecharModalTodasAcoes()" style="background: none; border: none; color: var(--text-secondary); font-size: 1.5rem; cursor: pointer; padding: 0 0.5rem;">&times;</button>
+        </div>
+
+        <!-- Barra de Pesquisa Rápida -->
+        <div style="padding: 1rem; border-bottom: 1px solid var(--border); background: rgba(30, 41, 59, 0.5);">
+            <input type="text" id="filtro-acoes-modal" placeholder="Pesquisar por ticker (ex: PETR4, VALE3) ou nome da empresa..." oninput="filtrarListaModal()" style="width: 100%; padding: 0.75rem; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-color); color: var(--text-primary); font-size: 0.9rem;">
+        </div>
+
+        <!-- Corpo com a Tabela Rolável -->
+        <div style="overflow-y: auto; padding: 1rem; flex: 1;">
+            <table class="market-table" style="margin-top: 0;">
+                <thead>
+                    <tr>
+                        <th>Ticker</th>
+                        <th>Empresa</th>
+                        <th>Preço Atual</th>
+                        <th>Variação</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-todas-acoes-modal">
+                    <tr><td colspan="4" style="text-align: center; color: var(--text-secondary);">Carregando listagem completa da B3...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Rodapé do Modal -->
+        <div style="padding: 0.75rem 1.25rem; border-top: 1px solid var(--border); text-align: right; background: rgba(30, 41, 59, 0.3);">
+            <button onclick="fecharModalTodasAcoes()" class="btn-primary" style="padding: 0.5rem 1.25rem; font-size: 0.85rem; cursor: pointer;">Fechar</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>
