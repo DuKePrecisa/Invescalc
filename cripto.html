@@ -8,6 +8,28 @@
     <link rel="stylesheet" href="css/style.css">
     <!-- Chart.js para os gráficos -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .crypto-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+        .crypto-table th {
+            padding: 0.75rem;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border);
+        }
+        .crypto-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+        }
+        .crypto-table tr:hover {
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+    </style>
 </head>
 <body>
 
@@ -22,31 +44,44 @@
     </header>
 
     <main>
-        <!-- Bloco 1: Gestão de Risco (A sua calculadora anterior) -->
+        <!-- Bloco 1: Gestão de Risco e Alvos (Calculadora Real de Trade) -->
         <div class="card" style="margin-bottom: 2rem;">
-            <h2>Gestão de Risco e Alvos (Trade)</h2>
-            <p class="subtitle">Calcule seu lucro potencial e risco no Stop Loss.</p>
+            <h2><i data-lucide="shield-alert" style="width: 22px; height: 22px; vertical-align: middle; color: var(--accent);"></i> Gestão de Risco e Alvos (Trade)</h2>
+            <p class="subtitle">Defina seu capital, preço de entrada, stop loss e alvo para calcular o risco x retorno da operação.</p>
+            
             <div class="form-grid">
                 <div class="form-group">
                     <label for="cripto-capital">Capital na Operação (R$)</label>
                     <input type="number" id="cripto-capital" value="1000" oninput="calcularRiscoCripto()">
                 </div>
                 <div class="form-group">
-                    <label for="cripto-entrada">Preço de Entrada</label>
+                    <label for="cripto-entrada">Preço de Entrada (R$)</label>
                     <input type="number" id="cripto-entrada" value="100" step="0.01" oninput="calcularRiscoCripto()">
                 </div>
             </div>
-            <div class="results-grid">
+
+            <div class="form-grid" style="margin-top: 1rem;">
+                <div class="form-group">
+                    <label for="cripto-stop">Preço de Stop Loss (R$)</label>
+                    <input type="number" id="cripto-stop" value="90" step="0.01" oninput="calcularRiscoCripto()">
+                </div>
+                <div class="form-group">
+                    <label for="cripto-alvo">Preço de Alvo / Lucro (R$)</label>
+                    <input type="number" id="cripto-alvo" value="130" step="0.01" oninput="calcularRiscoCripto()">
+                </div>
+            </div>
+
+            <div class="results-grid" style="margin-top: 1.5rem;">
                 <div class="result-item">
                     <div class="result-label">Lucro Potencial</div>
-                    <div class="result-value" id="res-cripto-lucro" style="color: var(--success);">+ 0,00</div>
+                    <div class="result-value" id="res-cripto-lucro" style="color: var(--success);">+ R$ 0,00</div>
                 </div>
                 <div class="result-item">
-                    <div class="result-label">Risco Máximo</div>
-                    <div class="result-value" id="res-cripto-risco" style="color: var(--danger);">- 0,00</div>
+                    <div class="result-label">Prejuízo Máximo (Risco)</div>
+                    <div class="result-value" id="res-cripto-risco" style="color: var(--danger);">- R$ 0,00</div>
                 </div>
                 <div class="result-item">
-                    <div class="result-label">Risco x Retorno</div>
+                    <div class="result-label">Relação Risco x Retorno</div>
                     <div class="result-value" id="res-cripto-rr">1 : 0.0</div>
                 </div>
             </div>
@@ -55,19 +90,19 @@
         <!-- Bloco 2: Monitor de Criptomoedas ao Vivo -->
         <div class="card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
-                <h2>Principais Criptomoedas ao Vivo</h2>
+                <h2><i data-lucide="coins" style="width: 22px; height: 22px; vertical-align: middle; color: var(--accent);"></i> Principais Criptomoedas ao Vivo</h2>
                 <span id="status-atualizacao" style="font-size: 0.8rem; color: var(--text-secondary);">Atualizando automaticamente...</span>
             </div>
             <p class="subtitle">Cotações em tempo real e variação das últimas 24 horas.</p>
 
             <!-- Tabela de Criptos -->
             <div style="overflow-x: auto; margin-bottom: 2rem;">
-                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+                <table class="crypto-table">
                     <thead>
-                        <tr style="border-bottom: 1px solid var(--border); color: var(--text-secondary);">
-                            <th style="padding: 0.75rem;">Ativo</th>
-                            <th style="padding: 0.75rem;">Preço (BRL)</th>
-                            <th style="padding: 0.75rem;">Var. 24h</th>
+                        <tr>
+                            <th>Ativo</th>
+                            <th>Preço (BRL)</th>
+                            <th>Var. 24h</th>
                         </tr>
                     </thead>
                     <tbody id="tabela-cripto">
@@ -78,8 +113,14 @@
                 </table>
             </div>
 
-            <!-- Gráfico de Acompanhamento -->
-            <h3 style="font-size: 1rem; margin-bottom: 1rem; color: var(--text-primary);">Tendência do Bitcoin (Últimos 7 dias)</h3>
+            <!-- Gráfico de Acompanhamento com Alternador de Ativo -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+                <h3 id="titulo-grafico" style="font-size: 1rem; margin: 0; color: var(--text-primary);">Tendência do Ativo (Últimos 7 dias)</h3>
+                <div>
+                    <button onclick="mudarMoedaGrafico('bitcoin', 'Bitcoin (BTC)')" id="btn-btc" class="btn-primary" style="padding: 0.3rem 0.75rem; font-size: 0.75rem; cursor: pointer;">Bitcoin</button>
+                    <button onclick="mudarMoedaGrafico('ethereum', 'Ethereum (ETH)')" id="btn-eth" class="btn-secondary" style="padding: 0.3rem 0.75rem; font-size: 0.75rem; cursor: pointer; background: var(--bg-color); border: 1px solid var(--border); color: var(--text-primary);">Ethereum</button>
+                </div>
+            </div>
             <div style="position: relative; height: 250px; width: 100%;">
                 <canvas id="graficoCripto"></canvas>
             </div>
@@ -91,22 +132,38 @@
     </footer>
 
     <script>
-        // Função da Calculadora de Risco (mantida)
+        const currencyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+        let moedaAtualGrafico = 'bitcoin';
+        let meuGrafico = null;
+
+        // 1. Calculadora Real de Gestão de Risco e Trade
         function calcularRiscoCripto() {
             const capital = parseFloat(document.getElementById('cripto-capital').value) || 0;
             const entrada = parseFloat(document.getElementById('cripto-entrada').value) || 0;
-            // Cálculo simplificado para demonstração na mesma tela
-            document.getElementById('res-cripto-lucro').innerText = `+ R$ ${(capital * 0.3).toFixed(2)}`;
-            document.getElementById('res-cripto-risco').innerText = `- R$ ${(capital * 0.1).toFixed(2)}`;
-            document.getElementById('res-cripto-rr').innerText = `1 : 3.0`;
+            const stop = parseFloat(document.getElementById('cripto-stop').value) || 0;
+            const alvo = parseFloat(document.getElementById('cripto-alvo').value) || 0;
+
+            if (entrada <= 0 || capital <= 0) return;
+
+            const quantidadeMoedas = capital / entrada;
+            
+            // Se o stop for abaixo da entrada (compra/long)
+            const riscoUnitario = Math.abs(entrada - stop);
+            const lucroUnitario = Math.abs(alvo - entrada);
+
+            const riscoTotal = riscoUnitario * quantidadeMoedas;
+            const lucroTotal = lucroUnitario * quantidadeMoedas;
+
+            const rrRatio = riscoUnitario > 0 ? (lucroUnitario / riscoUnitario).toFixed(2) : '0.0';
+
+            document.getElementById('res-cripto-lucro').innerText = `+ ${currencyFormatter.format(lucroTotal)}`;
+            document.getElementById('res-cripto-risco').innerText = `- ${currencyFormatter.format(riscoTotal)}`;
+            document.getElementById('res-cripto-rr').innerText = `1 : ${rrRatio}`;
         }
 
-        let meuGrafico = null;
-
-        // Buscar dados reais de Criptomoedas
+        // 2. Buscar dados reais de Criptomoedas para a tabela
         async function carregarDadosCripto() {
             try {
-                // Top 10 criptomoedas em BRL
                 const response = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=brl&order=market_cap_desc&per_page=10&page=1&sparkline=false');
                 const data = await response.json();
 
@@ -119,14 +176,13 @@
                     const sinalVar = variacao >= 0 ? '+' : '';
 
                     const tr = document.createElement('tr');
-                    tr.style.borderBottom = '1px solid var(--border)';
                     tr.innerHTML = `
-                        <td style="padding: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <td style="display: flex; align-items: center; gap: 0.5rem;">
                             <img src="${coin.image}" width="24" height="24" alt="${coin.name}">
                             <strong>${coin.name}</strong> <span style="color: var(--text-secondary); text-transform: uppercase;">(${coin.symbol})</span>
                         </td>
-                        <td style="padding: 0.75rem; font-weight: 600;">R$ ${coin.current_price.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
-                        <td style="padding: 0.75rem; color: ${corVar}; font-weight: 600;">${sinalVar}${variacao.toFixed(2)}%</td>
+                        <td style="font-weight: 600;">${currencyFormatter.format(coin.current_price)}</td>
+                        <td style="color: ${corVar}; font-weight: 600;">${sinalVar}${variacao.toFixed(2)}%</td>
                     `;
                     tbody.appendChild(tr);
                 });
@@ -138,20 +194,18 @@
             }
         }
 
-        // Buscar histórico do Bitcoin para o gráfico
-        async function carregarGraficoBitcoin() {
+        // 3. Buscar histórico para o gráfico (Bitcoin ou Ethereum)
+        async function carregarGraficoCripto(moedaId, nomeExibicao) {
             try {
-                const response = await fetch('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=brl&days=7');
+                const response = await fetch(`https://api.coingecko.com/api/v3/coins/${moedaId}/market_chart?vs_currency=brl&days=7`);
                 const data = await response.json();
                 
-                // Pega os preços e formata as datas
                 const precos = data.prices.map(item => item[1]);
                 const datas = data.prices.map(item => {
                     const d = new Date(item[0]);
                     return `${d.getDate()}/${d.getMonth()+1}`;
                 });
 
-                // Reduz pontos para o gráfico não ficar poluído (pega de 8 em 8 horas)
                 const passos = 21;
                 const dadosFiltradosPreco = [];
                 const dadosFiltradosData = [];
@@ -160,8 +214,9 @@
                     dadosFiltradosData.push(datas[i]);
                 }
 
+                document.getElementById('titulo-grafico').innerText = `Tendência de ${nomeExibicao} (Últimos 7 dias)`;
+
                 const ctx = document.getElementById('graficoCripto').getContext('2d');
-                
                 if (meuGrafico) meuGrafico.destroy();
 
                 meuGrafico = new Chart(ctx, {
@@ -169,7 +224,7 @@
                     data: {
                         labels: dadosFiltradosData,
                         datasets: [{
-                            label: 'Preço do Bitcoin (R$)',
+                            label: `Preço (${nomeExibicao})`,
                             data: dadosFiltradosPreco,
                             borderColor: '#3b82f6',
                             backgroundColor: 'rgba(59, 130, 246, 0.1)',
@@ -194,15 +249,32 @@
             }
         }
 
-        // Inicializar e configurar atualização automática a cada 60 segundos
+        function mudarMoedaGrafico(moedaId, nome) {
+            moedaAtualGrafico = moedaId;
+            carregarGraficoCripto(moedaId, nome);
+            
+            // Alterna estilos dos botões
+            if(moedaId === 'bitcoin') {
+                document.getElementById('btn-btc').style.background = 'var(--accent-color, #3b82f6)';
+                document.getElementById('btn-eth').style.background = 'var(--bg-color)';
+                document.getElementById('btn-eth').style.border = '1px solid var(--border)';
+            } else {
+                document.getElementById('btn-eth').style.background = 'var(--accent-color, #3b82f6)';
+                document.getElementById('btn-btc').style.background = 'var(--bg-color)';
+                document.getElementById('btn-btc').style.border = '1px solid var(--border)';
+            }
+        }
+
+        // Inicializar e configurar atualização automática
         window.onload = function() {
             calcularRiscoCripto();
             carregarDadosCripto();
-            carregarGraficoBitcoin();
+            carregarGraficoCripto('bitcoin', 'Bitcoin (BTC)');
+            lucide.createIcons();
 
             setInterval(() => {
                 carregarDadosCripto();
-            }, 60000); // Atualiza a cada 1 minuto
+            }, 60000);
         };
     </script>
 </body>
