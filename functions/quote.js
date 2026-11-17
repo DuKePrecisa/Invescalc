@@ -12,8 +12,10 @@ export async function onRequest(context) {
 
   const token = env.BRAPI_TOKEN || '';
   
-  // Copia todos os parâmetros recebidos da URL (como range e interval) e adiciona o token de forma segura
+  // Remove o ticker dos parâmetros para repassar o restante (range, interval, etc.) direto para a Brapi
+  url.searchParams.delete('ticker');
   url.searchParams.set('token', token);
+
   const brapiUrl = `https://brapi.dev/api/quote/${encodeURIComponent(ticker)}?${url.searchParams.toString()}`;
 
   try {
@@ -25,7 +27,7 @@ export async function onRequest(context) {
       headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*'
-       }
+      }
     });
   } catch (error) {
     return new Response(JSON.stringify({ error: 'Erro ao consultar a API' }), {
