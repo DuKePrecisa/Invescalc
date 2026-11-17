@@ -6,6 +6,8 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%226%22 fill=%22%230f172a%22/><path d=%22M6 22l6-6 5 5 9-10%22 stroke=%22%2310b981%22 stroke-width=%223%22 fill=%22none%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/><path d=%22M20 11h6v6%22 stroke=%22%2310b981%22 stroke-width=%223%22 fill=%22none%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/></svg>">
     <title>InvestCalc — Central de Calculadoras e Mercado</title>
     <link rel="stylesheet" href="css/style.css">
+    <!-- Biblioteca Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         /* 1. Barra de Cotações Deslizante (Ticker Infinito) */
         .ticker-container {
@@ -146,7 +148,9 @@
             <div class="hub-grid" style="margin-top: 1.5rem;">
                 <div class="hub-card">
                     <div>
-                        <h3 style="color: var(--accent); margin-bottom: 0.5rem;">📈 Renda Fixa</h3>
+                        <h3 style="color: var(--accent); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <i data-lucide="trending-up" style="width: 20px; height: 20px;"></i> Renda Fixa
+                        </h3>
                         <p class="subtitle">Compare Tesouro Selic, CDB, RDB e LCI líquidos e simule juros compostos com aportes.</p>
                     </div>
                     <a href="renda-fixa.html" class="btn-primary">Acessar Simulador</a>
@@ -154,7 +158,9 @@
 
                 <div class="hub-card">
                     <div>
-                        <h3 style="color: var(--accent); margin-bottom: 0.5rem;">📊 Bolsa de Valores</h3>
+                        <h3 style="color: var(--accent); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <i data-lucide="bar-chart-3" style="width: 20px; height: 20px;"></i> Bolsa de Valores
+                        </h3>
                         <p class="subtitle">Calcule o novo preço médio das suas ações/FIIs e acompanhe o radar de altas e baixas da B3.</p>
                     </div>
                     <a href="bolsa.html" class="btn-primary">Acessar Calculadora</a>
@@ -162,7 +168,9 @@
 
                 <div class="hub-card">
                     <div>
-                        <h3 style="color: var(--accent); margin-bottom: 0.5rem;">🪙 Criptomoedas & Risco</h3>
+                        <h3 style="color: var(--accent); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <i data-lucide="coins" style="width: 20px; height: 20px;"></i> Criptomoedas & Risco
+                        </h3>
                         <p class="subtitle">Gerencie o risco de suas operações (Stop Loss) e monitore o topo do mercado cripto.</p>
                     </div>
                     <a href="cripto.html" class="btn-primary">Acessar Ferramenta</a>
@@ -183,53 +191,39 @@
             return `<span class="${classe}">${sinal}${num.toFixed(2)}%</span>`;
         }
 
-       async function carregarResumoCompleto() {
+        async function carregarResumoCompleto() {
             const tickerItens = [];
 
             const [resCripto, resCambio, resTaxas, resIbov] = await Promise.allSettled([
                 fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=brl&ids=bitcoin,ethereum&order=market_cap_desc').then(r => r.json()),
                 fetch('https://economia.awesomeapi.com.br/json/last/USD-BRL,EUR-BRL').then(r => r.json()),
                 fetch('https://brasilapi.com.br/api/taxas/v1').then(r => r.json()),
-                // fetch('https://brapi.dev/api/quote/%5EBVSP?token=SEU_TOKEN')
-               // Agora (100% seguro via servidor do Cloudflare):
-               fetch('/api/quote?ticker=%5EBVSP')
-                .then(r => r.json())
-                .then(data => {
-               // seu código de processamento do ibov
-            })
-                .catch(err => console.error("Erro no IBOV:", err));
+                fetch('/api/quote?ticker=%5EBVSP').then(r => r.json())
             ]);
 
-            // 1. Processa Ibovespa (com o código de tratamento que você colou)
-            if (resIbov.status === 'fulfilled' && resIbov.value.results && resIbov.value.results[0]) {
-                const ibov = resIbov.value.results[0];
-                const pontos = Math.round(ibov.regularMarketPrice).toLocaleString('pt-BR');
-                const varHtml = formatarVariacao(ibov.regularMarketChangePercent);
+            // 1. Processa Ibovespa via Proxy do Cloudflare
+            if (resIbov.status === 'fulfilled' && resIbov.value) {
+                const ibovData = resIbov.value.results ? resIbov.value.results[0] : resIbov.value;
+                if (ibovData && ibovData.regularMarketPrice) {
+                    const pontos = Math.round(ibovData.regularMarketPrice).toLocaleString('pt-BR');
+                    const variacao = ibovData.regularMarketChangePercent || 0;
+                    const varHtml = formatarVariacao(variacao);
 
-                document.getElementById('card-ibov').innerText = `${pontos} pts`;
-                document.getElementById('card-ibov-var').innerHTML = varHtml;
-                tickerItens.push(`<div class="ticker-item"><span>IBOV:</span> <span class="ticker-value">${pontos} pts</span> (${varHtml})</div>`);
+                    document.getElementById('card-ibov').innerText = `${pontos} pts`;
+                    document.getElementById('card-ibov-var').innerHTML = varHtml;
+                    tickerItens.push(`<div class="ticker-item"><span>IBOV:</span> <span class="ticker-value">${pontos} pts</span> (${varHtml})</div>`);
+                } else {
+                    document.getElementById('card-ibov').innerText = "128.450 pts";
+                    document.getElementById('card-ibov-var').innerHTML = formatarVariacao(0.45);
+                    tickerItens.push(`<div class="ticker-item"><span>IBOV:</span> <span class="ticker-value">128.450 pts</span> (${formatarVariacao(0.45)})</div>`);
+                }
             } else {
-                // Fallback visual caso ocorra alguma instabilidade
                 document.getElementById('card-ibov').innerText = "128.450 pts";
                 document.getElementById('card-ibov-var').innerHTML = formatarVariacao(0.45);
                 tickerItens.push(`<div class="ticker-item"><span>IBOV:</span> <span class="ticker-value">128.450 pts</span> (${formatarVariacao(0.45)})</div>`);
             }
 
-            // ... (restante das outras moedas e taxas continua igual abaixo)
-            
-            // Ibovespa
-            if (resIbov.status === 'fulfilled' && resIbov.value.results && resIbov.value.results[0]) {
-                const ibov = resIbov.value.results[0];
-                const pontos = Math.round(ibov.regularMarketPrice).toLocaleString('pt-BR');
-                const varHtml = formatarVariacao(ibov.regularMarketChangePercent);
-
-                document.getElementById('card-ibov').innerText = `${pontos} pts`;
-                document.getElementById('card-ibov-var').innerHTML = varHtml;
-                tickerItens.push(`<div class="ticker-item"><span>IBOV:</span> <span class="ticker-value">${pontos} pts</span> (${varHtml})</div>`);
-            }
-
-            // Dólar e Euro
+            // 2. Dólar e Euro
             if (resCambio.status === 'fulfilled') {
                 if (resCambio.value.USDBRL) {
                     const usd = resCambio.value.USDBRL;
@@ -248,7 +242,7 @@
                 }
             }
 
-            // Selic e CDI
+            // 3. Selic e CDI
             if (resTaxas.status === 'fulfilled' && Array.isArray(resTaxas.value)) {
                 resTaxas.value.forEach(t => {
                     if (t.nome.toLowerCase().includes('selic')) {
@@ -262,7 +256,7 @@
                 });
             }
 
-            // Bitcoin e Ethereum
+            // 4. Bitcoin e Ethereum
             if (resCripto.status === 'fulfilled' && Array.isArray(resCripto.value)) {
                 resCripto.value.forEach(coin => {
                     const preco = coin.current_price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -276,7 +270,7 @@
                 });
             }
 
-            // Duplica os itens para criar o looping contínuo perfeito na animação CSS
+            // Duplica os itens para criar o looping contínuo na animação CSS
             if (tickerItens.length > 0) {
                 const conteudo = tickerItens.join('');
                 document.getElementById('ticker-track').innerHTML = conteudo + conteudo;
@@ -288,6 +282,7 @@
 
         window.onload = function() {
             carregarResumoCompleto();
+            lucide.createIcons(); // Ativa os ícones visuais
             setInterval(carregarResumoCompleto, 120000); // Atualiza a cada 2 minutos
         };
     </script>
