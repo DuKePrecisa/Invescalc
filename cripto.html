@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%226%22 fill=%22%230f172a%22/><path d=%22M6 22l6-6 5 5 9-10%22 stroke=%22%2310b981%22 stroke-width=%223%22 fill=%22none%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/><path d=%22M20 11h6v6%22 stroke=%22%2310b981%22 stroke-width=%223%22 fill=%22none%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/></svg>">
-    <title>Criptomoedas e Mercado — InvestCalc</title>
+    <link rel="icon" href="/icon.png" type="image/png">
+    <title>Criptomoedas e Gestão de Risco — InvestCalc</title>
     <link rel="stylesheet" href="css/style.css">
     <!-- Chart.js para os gráficos -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -40,54 +40,55 @@
             <a href="renda-fixa.html" class="tab-btn">Renda Fixa</a>
             <a href="bolsa.html" class="tab-btn">Bolsa</a>
             <a href="cripto.html" class="tab-btn active">Cripto</a>
+            <a href="independencia.html" class="tab-btn">Independência</a>
         </nav>
     </header>
 
     <main>
-        <!-- Bloco 1: Gestão de Risco e Alvos (Calculadora Real de Trade) -->
+        <!-- BLOCO 1: GESTÃO DE RISCO E POSITION SIZING PARA RENDA VARIÁVEL -->
         <div class="card" style="margin-bottom: 2rem;">
-            <h2><i data-lucide="shield-alert" style="width: 22px; height: 22px; vertical-align: middle; color: var(--accent);"></i> Gestão de Risco e Alvos (Trade)</h2>
-            <p class="subtitle">Defina seu capital, preço de entrada, stop loss e alvo para calcular o risco x retorno da operação.</p>
+            <h2><i data-lucide="shield-alert" style="width: 22px; height: 22px; vertical-align: middle; color: var(--accent);"></i> Gestão de Risco para Renda Variável</h2>
+            <p class="subtitle">Proteja seu capital definindo o tamanho ideal da posição e calculando o risco máximo por operação (Stop Loss).</p>
             
-            <div class="form-grid">
+            <div class="form-grid" style="margin-top: 1.5rem;">
                 <div class="form-group">
-                    <label for="cripto-capital">Capital na Operação (R$)</label>
-                    <input type="number" id="cripto-capital" value="1000" oninput="calcularRiscoCripto()">
+                    <label for="risk-capital">Capital Total Disponível na Corretora (R$)</label>
+                    <input type="number" id="risk-capital" value="10000" step="500" oninput="calcularGestaoRisco()">
                 </div>
                 <div class="form-group">
-                    <label for="cripto-entrada">Preço de Entrada (R$)</label>
-                    <input type="number" id="cripto-entrada" value="100" step="0.01" oninput="calcularRiscoCripto()">
+                    <label for="risk-pct">Risco Máximo Aceito na Operação (%)</label>
+                    <input type="number" id="risk-pct" value="2" step="0.5" oninput="calcularGestaoRisco()">
                 </div>
             </div>
 
             <div class="form-grid" style="margin-top: 1rem;">
                 <div class="form-group">
-                    <label for="cripto-stop">Preço de Stop Loss (R$)</label>
-                    <input type="number" id="cripto-stop" value="90" step="0.01" oninput="calcularRiscoCripto()">
+                    <label for="risk-entry">Preço de Entrada do Ativo (R$)</label>
+                    <input type="number" id="risk-entry" value="100" step="0.01" oninput="calcularGestaoRisco()">
                 </div>
                 <div class="form-group">
-                    <label for="cripto-alvo">Preço de Alvo / Lucro (R$)</label>
-                    <input type="number" id="cripto-alvo" value="130" step="0.01" oninput="calcularRiscoCripto()">
+                    <label for="risk-stop">Preço de Stop Loss (R$)</label>
+                    <input type="number" id="risk-stop" value="92" step="0.01" oninput="calcularGestaoRisco()">
                 </div>
             </div>
 
-            <div class="results-grid" style="margin-top: 1.5rem;">
+            <div class="results-grid" style="margin-top: 2rem;">
                 <div class="result-item">
-                    <div class="result-label">Lucro Potencial</div>
-                    <div class="result-value" id="res-cripto-lucro" style="color: var(--success);">+ R$ 0,00</div>
+                    <div class="result-label">Valor Financeiro Arriscado</div>
+                    <div class="result-value" id="res-risco-financeiro" style="color: var(--danger);">R$ 0,00</div>
                 </div>
                 <div class="result-item">
-                    <div class="result-label">Prejuízo Máximo (Risco)</div>
-                    <div class="result-value" id="res-cripto-risco" style="color: var(--danger);">- R$ 0,00</div>
+                    <div class="result-label">Quantidade Ideal de Ativos</div>
+                    <div class="result-value" id="res-quantidade" style="color: var(--accent);">0</div>
                 </div>
                 <div class="result-item">
-                    <div class="result-label">Relação Risco x Retorno</div>
-                    <div class="result-value" id="res-cripto-rr">1 : 0.0</div>
+                    <div class="result-label">Capital Total Alocado na Posição</div>
+                    <div class="result-value" id="res-alocacao" style="color: var(--text-primary);">R$ 0,00</div>
                 </div>
             </div>
         </div>
 
-        <!-- Bloco 2: Monitor de Criptomoedas ao Vivo -->
+        <!-- BLOCO 2: MONITOR DE CRIPTOMOEDAS AO VIVO -->
         <div class="card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
                 <h2><i data-lucide="coins" style="width: 22px; height: 22px; vertical-align: middle; color: var(--accent);"></i> Principais Criptomoedas ao Vivo</h2>
@@ -136,29 +137,35 @@
         let moedaAtualGrafico = 'bitcoin';
         let meuGrafico = null;
 
-        // 1. Calculadora Real de Gestão de Risco e Trade
-        function calcularRiscoCripto() {
-            const capital = parseFloat(document.getElementById('cripto-capital').value) || 0;
-            const entrada = parseFloat(document.getElementById('cripto-entrada').value) || 0;
-            const stop = parseFloat(document.getElementById('cripto-stop').value) || 0;
-            const alvo = parseFloat(document.getElementById('cripto-alvo').value) || 0;
+        // 1. Calculadora de Gestão de Risco e Position Sizing
+        function calcularGestaoRisco() {
+            const capitalTotal = parseFloat(document.getElementById('risk-capital').value) || 0;
+            const riscoPct = parseFloat(document.getElementById('risk-pct').value) || 0;
+            const precoEntrada = parseFloat(document.getElementById('risk-entry').value) || 0;
+            const precoStop = parseFloat(document.getElementById('risk-stop').value) || 0;
 
-            if (entrada <= 0 || capital <= 0) return;
+            if (precoEntrada <= 0 || precoStop >= precoEntrada || capitalTotal <= 0) {
+                document.getElementById('res-risco-financeiro').innerText = "R$ 0,00";
+                document.getElementById('res-quantidade').innerText = "0";
+                document.getElementById('res-alocacao').innerText = "R$ 0,00";
+                return;
+            }
 
-            const quantidadeMoedas = capital / entrada;
-            
-            // Se o stop for abaixo da entrada (compra/long)
-            const riscoUnitario = Math.abs(entrada - stop);
-            const lucroUnitario = Math.abs(alvo - entrada);
+            // Valor máximo em dinheiro que o trader aceita perder nesta operação
+            const dinheiroRiscoMaximo = capitalTotal * (riscoPct / 100);
 
-            const riscoTotal = riscoUnitario * quantidadeMoedas;
-            const lucroTotal = lucroUnitario * quantidadeMoedas;
+            // Risco unitário por ação/cripto (distância entre a entrada e o stop loss)
+            const riscoUnitario = precoEntrada - precoStop;
 
-            const rrRatio = riscoUnitario > 0 ? (lucroUnitario / riscoUnitario).toFixed(2) : '0.0';
+            // Quantidade de ativos que podem ser comprados respeitando o limite de perda
+            const quantidadeAtivos = dinheiroRiscoMaximo / riscoUnitario;
 
-            document.getElementById('res-cripto-lucro').innerText = `+ ${currencyFormatter.format(lucroTotal)}`;
-            document.getElementById('res-cripto-risco').innerText = `- ${currencyFormatter.format(riscoTotal)}`;
-            document.getElementById('res-cripto-rr').innerText = `1 : ${rrRatio}`;
+            // Capital financeiro total alocado nessa compra
+            const capitalAlocado = quantidadeAtivos * precoEntrada;
+
+            document.getElementById('res-risco-financeiro').innerText = currencyFormatter.format(dinheiroRiscoMaximo);
+            document.getElementById('res-quantidade').innerText = quantidadeAtivos > 10 ? Math.floor(quantidadeAtivos).toLocaleString('pt-BR') : quantidadeAtivos.toFixed(4);
+            document.getElementById('res-alocacao').innerText = currencyFormatter.format(capitalAlocado);
         }
 
         // 2. Buscar dados reais de Criptomoedas para a tabela
@@ -253,7 +260,6 @@
             moedaAtualGrafico = moedaId;
             carregarGraficoCripto(moedaId, nome);
             
-            // Alterna estilos dos botões
             if(moedaId === 'bitcoin') {
                 document.getElementById('btn-btc').style.background = 'var(--accent-color, #3b82f6)';
                 document.getElementById('btn-eth').style.background = 'var(--bg-color)';
@@ -265,9 +271,8 @@
             }
         }
 
-        // Inicializar e configurar atualização automática
         window.onload = function() {
-            calcularRiscoCripto();
+            calcularGestaoRisco();
             carregarDadosCripto();
             carregarGraficoCripto('bitcoin', 'Bitcoin (BTC)');
             lucide.createIcons();
