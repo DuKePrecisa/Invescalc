@@ -24,10 +24,10 @@
     </header>
 
     <main>
-        <!-- BLOCO 1: SIMULADOR DE RENDA FIXA (CDB / Tesouro / CDI) -->
+        <!-- BLOCO 1: SIMULADOR DE TITULOS DE RENDA FIXA (CDI, IPCA, PREFIXADO) -->
         <div class="card" style="margin-bottom: 2rem;">
-            <h2><i data-lucide="trending-up" style="width: 22px; height: 22px; vertical-align: middle; color: var(--accent);"></i> Simulador de Renda Fixa</h2>
-            <p class="subtitle">Compare o rendimento bruto e líquido de aplicações atreladas ao CDI e taxas prefixadas.</p>
+            <h2><i data-lucide="trending-up" style="width: 22px; height: 22px; vertical-align: middle; color: var(--accent);"></i> Simulador e Comparador de Renda Fixa</h2>
+            <p class="subtitle">Simule o rendimento bruto e líquido de títulos descontando a tabela regressiva do Imposto de Renda.</p>
             
             <div class="form-grid" style="margin-top: 1.5rem;">
                 <div class="form-group">
@@ -42,26 +42,32 @@
 
             <div class="form-grid" style="margin-top: 1rem;">
                 <div class="form-group">
-                    <label for="rf-taxa">Taxa (% do CDI ou Pré)</label>
-                    <input type="number" id="rf-taxa" value="100" step="5" oninput="calcularRendaFixa()">
+                    <label for="rf-tipo">Tipo de Título / Taxa</label>
+                    <select id="rf-tipo" onchange="calcularRendaFixa()" style="width: 100%; padding: 0.75rem; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-color); color: var(--text-primary);">
+                        <option value="cdi-100">CDB / Tesouro Selic (100% do CDI)</option>
+                        <option value="cdi-110">CDB Premium (110% do CDI)</option>
+                        <option value="lci-90">LCI / LCA Isenta (90% do CDI)</option>
+                        <option value="prefixado">Prefixado (11.5% ao ano)</option>
+                        <option value="ipca">IPCA+ (Inflação + 6.5% a.a.)</option>
+                    </select>
                 </div>
                 <div class="form-group">
-                    <label for="rf-prazo">Prazo (Meses)</label>
+                    <label for="rf-prazo">Prazo do Investimento (Meses)</label>
                     <input type="number" id="rf-prazo" value="24" step="6" oninput="calcularRendaFixa()">
                 </div>
             </div>
 
             <div class="results-grid" style="margin-top: 2rem;">
                 <div class="result-item">
-                    <div class="result-label">Valor Total Investido</div>
+                    <div class="result-label">Total Investido (Principal)</div>
                     <div class="result-value" id="rf-res-investido" style="color: var(--text-primary);">R$ 0,00</div>
                 </div>
                 <div class="result-item">
-                    <div class="result-label">Rendimento Bruto</div>
+                    <div class="result-label">Rendimento Bruto / IR</div>
                     <div class="result-value" id="rf-res-bruto" style="color: var(--success);">R$ 0,00</div>
                 </div>
                 <div class="result-item">
-                    <div class="result-label">Montante Final Bruto</div>
+                    <div class="result-label">Montante Final Líquido</div>
                     <div class="result-value" id="rf-res-total" style="color: var(--accent);">R$ 0,00</div>
                 </div>
             </div>
@@ -70,7 +76,7 @@
         <!-- BLOCO 2: SIMULADOR DE CRESCIMENTO DE PATRIMÔNIO (Juros Compostos) -->
         <div class="card">
             <h2><i data-lucide="bar-chart-2" style="width: 22px; height: 22px; vertical-align: middle; color: var(--accent);"></i> Simulador de Crescimento de Patrimônio</h2>
-            <p class="subtitle">Projeção matemática de juros compostos considerando aportes mensais constantes em investimentos de renda fixa.</p>
+            <p class="subtitle">Projeção matemática de juros compostos considerando aportes mensais constantes a longo prazo.</p>
 
             <div class="form-grid" style="margin-top: 1.5rem;">
                 <div class="form-group">
@@ -126,16 +132,29 @@
         const currencyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
         let graficoPatrimonioInstance = null;
 
-        // 1. Lógica do Simulador de Renda Fixa básico
+        // 1. Lógica do Simulador de Títulos de Renda Fixa (com cálculo de IR Regressivo)
         function calcularRendaFixa() {
             const inicial = parseFloat(document.getElementById('rf-investimento').value) || 0;
             const aporte = parseFloat(document.getElementById('rf-aporte').value) || 0;
-            const percentualCDI = parseFloat(document.getElementById('rf-taxa').value) || 0;
+            const tipo = document.getElementById('rf-tipo').value;
             const meses = parseInt(document.getElementById('rf-prazo').value) || 0;
 
-            // CDI estimado de referência anual (ex: 10.65% a.a.) convertido para mensal
-            const cdiAnual = 10.65;
-            const taxaAnualEfetiva = (cdiAnual * (percentualCDI / 100)) / 100;
+            let taxaAnualEfetiva = 0.1065; // base CDI 10.65%
+            let isentaIR = false;
+
+            if (tipo === 'cdi-100') {
+                taxaAnualEfetiva = 0.1065 * 1.0;
+            } else if (tipo === 'cdi-110') {
+                taxaAnualEfetiva = 0.1065 * 1.1;
+            } else if (tipo === 'lci-90') {
+                taxaAnualEfetiva = 0.1065 * 0.9;
+                isentaIR = true;
+            } else if (tipo === 'prefixado') {
+                taxaAnualEfetiva = 0.115;
+            } else if (tipo === 'ipca') {
+                taxaAnualEfetiva = 0.045 + 0.065; // IPCA estimado 4.5% + 6.5%
+            }
+
             const taxaMensal = Math.pow(1 + taxaAnualEfetiva, 1 / 12) - 1;
 
             let totalAcumulado = inicial;
@@ -147,10 +166,25 @@
             }
 
             const rendimentoBruto = totalAcumulado - totalInvestido;
+            let aliquotaIR = 0.15; // padrão acima de 720 dias
+
+            if (!isentaIR) {
+                const dias = meses * 30;
+                if (dias <= 180) aliquotaIR = 0.225;
+                else if (dias <= 360) aliquotaIR = 0.20;
+                else if (dias <= 720) aliquotaIR = 0.175;
+                else aliquotaIR = 0.15;
+            } else {
+                aliquotaIR = 0;
+            }
+
+            const valorIR = rendimentoBruto * aliquotaIR;
+            const rendimentoLiquido = rendimentoBruto - valorIR;
+            const montanteLiquido = totalInvestido + rendimentoLiquido;
 
             document.getElementById('rf-res-investido').innerText = currencyFormatter.format(totalInvestido);
-            document.getElementById('rf-res-bruto').innerText = currencyFormatter.format(rendimentoBruto);
-            document.getElementById('rf-res-total').innerText = currencyFormatter.format(totalAcumulado);
+            document.getElementById('rf-res-bruto').innerText = `Líquido: ${currencyFormatter.format(rendimentoLiquido)} (IR: ${(aliquotaIR*100).toFixed(1)}%)`;
+            document.getElementById('rf-res-total').innerText = currencyFormatter.format(montanteLiquido);
         }
 
         // 2. Lógica do Simulador de Crescimento de Patrimônio com Gráfico
@@ -162,7 +196,6 @@
 
             const totalBolso = initial + (monthly * 12 * years);
             
-            // Fórmula padrão de juros compostos com aportes mensais
             const r = rate / 100 / 12;
             const totalMeses = years * 12;
             
