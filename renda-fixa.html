@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="/icon.png" type="image/png">
-    <title>Simulador de Renda Fixa e Crescimento — InvestCalc</title>
+    <title>Simulador e Comparador de Renda Fixa — InvestCalc</title>
     <link rel="stylesheet" href="css/style.css">
     <!-- Chart.js para os gráficos -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -133,6 +133,53 @@
             </div>
         </div>
 
+        <!-- NOVO BLOCO: COMPARADOR DIRETO BRUTO VS LÍQUIDO (Efeito do IR Regressivo) -->
+        <div class="card" style="margin-bottom: 2rem;">
+            <h2><i data-lucide="scale" style="width: 22px; height: 22px; vertical-align: middle; color: var(--accent);"></i> Comparador de Rentabilidade: Bruto vs. Líquido</h2>
+            <p class="subtitle">Compare lado a lado um CDB tributável com uma LCI isenta considerando o impacto real do Imposto de Renda no mesmo prazo.</p>
+
+            <div class="form-grid" style="margin-top: 1.5rem;">
+                <div class="form-group">
+                    <label for="comp-valor">Valor Único Aplicado (R$)</label>
+                    <input type="number" id="comp-valor" value="10000" step="1000" oninput="calcularComparativoIR()">
+                </div>
+                <div class="form-group">
+                    <label for="comp-meses">Prazo de Resgate (Meses)</label>
+                    <input type="number" id="comp-meses" value="12" step="3" oninput="calcularComparativoIR()">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 2rem;">
+                <!-- Opção A: CDB Tributável -->
+                <div style="background: rgba(30, 41, 59, 0.4); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem;">
+                    <h3 style="font-size: 1rem; color: var(--text-primary); margin-bottom: 0.5rem;">CDB 100% do CDI</h3>
+                    <p style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 1rem;">Sujeito à Tabela Regressiva de IR.</p>
+                    <div style="font-size: 0.85rem; margin-bottom: 0.4rem;">Rendimento Bruto: <strong id="comp-cdi-bruto" style="color: var(--success);">R$ 0,00</strong></div>
+                    <div style="font-size: 0.85rem; margin-bottom: 0.4rem;">Alíquota de IR: <strong id="comp-cdi-ir" style="color: var(--danger);">0%</strong></div>
+                    <div style="font-size: 0.85rem; margin-bottom: 0.8rem;">Imposto Pago: <strong id="comp-cdi-valor-ir" style="color: var(--danger);">R$ 0,00</strong></div>
+                    <div style="border-top: 1px solid var(--border); padding-top: 0.75rem; font-size: 0.95rem;">
+                        Montante Líquido: <strong id="comp-cdi-liquido" style="color: var(--accent);">R$ 0,00</strong>
+                    </div>
+                </div>
+
+                <!-- Opção B: LCI Isenta -->
+                <div style="background: rgba(30, 41, 59, 0.4); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem;">
+                    <h3 style="font-size: 1rem; color: var(--text-primary); margin-bottom: 0.5rem;">LCI 90% do CDI</h3>
+                    <p style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 1rem;">Totalmente Isento de Imposto de Renda.</p>
+                    <div style="font-size: 0.85rem; margin-bottom: 0.4rem;">Rendimento Bruto: <strong id="comp-lci-bruto" style="color: var(--success);">R$ 0,00</strong></div>
+                    <div style="font-size: 0.85rem; margin-bottom: 0.4rem;">Alíquota de IR: <strong style="color: var(--success);">Isento (0%)</strong></div>
+                    <div style="font-size: 0.85rem; margin-bottom: 0.8rem;">Imposto Pago: <strong>R$ 0,00</strong></div>
+                    <div style="border-top: 1px solid var(--border); padding-top: 0.75rem; font-size: 0.95rem;">
+                        Montante Líquido: <strong id="comp-lci-liquido" style="color: var(--accent);">R$ 0,00</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div id="comp-vencedor" style="margin-top: 1.5rem; padding: 0.85rem; background: rgba(16, 185, 129, 0.1); border: 1px solid var(--success); border-radius: 6px; text-align: center; font-size: 0.9rem; font-weight: 600; color: var(--success);">
+                Calculando melhor opção...
+            </div>
+        </div>
+
         <!-- BLOCO 2: SIMULADOR DE CRESCIMENTO DE PATRIMÔNIO (Juros Compostos) -->
         <div class="card">
             <h2><i data-lucide="bar-chart-2" style="width: 22px; height: 22px; vertical-align: middle; color: var(--accent);"></i> Simulador de Crescimento de Patrimônio</h2>
@@ -247,7 +294,60 @@
             document.getElementById('rf-res-total').innerText = currencyFormatter.format(montanteLiquido);
         }
 
-        // 2. Lógica do Simulador de Crescimento de Patrimônio com Gráfico
+        // 2. Lógica do Comparador Direto Bruto vs Líquido (CDB vs LCI com IR Regressivo)
+        function calcularComparativoIR() {
+            const valor = parseFloat(document.getElementById('comp-valor').value) || 0;
+            const meses = parseInt(document.getElementById('comp-meses').value) || 12;
+
+            const cdiAnual = 0.1365;
+            
+            // Taxas anuais
+            const taxaCdi100 = cdiAnual;
+            const taxaLci90 = cdiAnual * 0.9;
+
+            // Montantes brutos compostos
+            const montanteCdiBruto = valor * Math.pow(1 + taxaCdi100 / 12, meses);
+            const rendimentoCdiBruto = montanteCdiBruto - valor;
+
+            const montanteLciLiquido = valor * Math.pow(1 + taxaLci90 / 12, meses);
+            const rendimentoLciLiquido = montanteLciLiquido - valor;
+
+            // Alíquota de IR Regressiva para o CDB
+            const dias = meses * 30;
+            let aliquotaIR = 0.15;
+            if (dias <= 180) aliquotaIR = 0.225;
+            else if (dias <= 360) aliquotaIR = 0.20;
+            else if (dias <= 720) aliquotaIR = 0.175;
+            else aliquotaIR = 0.15;
+
+            const impostoCdi = rendimentoCdiBruto * aliquotaIR;
+            const rendimentoCdiLiquido = rendimentoCdiBruto - impostoCdi;
+            const montanteCdiLiquido = valor + rendimentoCdiLiquido;
+
+            // Exibir nos campos do CDB
+            document.getElementById('comp-cdi-bruto').innerText = currencyFormatter.format(rendimentoCdiBruto);
+            document.getElementById('comp-cdi-ir').innerText = `${(aliquotaIR * 100).toFixed(1)}%`;
+            document.getElementById('comp-cdi-valor-ir').innerText = currencyFormatter.format(impostoCdi);
+            document.getElementById('comp-cdi-liquido').innerText = currencyFormatter.format(montanteCdiLiquido);
+
+            // Exibir nos campos da LCI
+            document.getElementById('comp-lci-bruto').innerText = currencyFormatter.format(rendimentoLciLiquido);
+            document.getElementById('comp-lci-liquido').innerText = currencyFormatter.format(montanteLciLiquido);
+
+            // Mensagem do Vencedor
+            const divVencedor = document.getElementById('comp-vencedor');
+            if (montanteCdiLiquido > montanteLciLiquido) {
+                const diff = montanteCdiLiquido - montanteLciLiquido;
+                divVencedor.innerHTML = `🏆 Neste prazo, o <strong>CDB 100% do CDI</strong> rende <strong>${currencyFormatter.format(diff)}</strong> a mais que a LCI (mesmo pagando IR).`;
+            } else if (montanteLciLiquido > montanteCdiLiquido) {
+                const diff = montanteLciLiquido - montanteCdiLiquido;
+                divVencedor.innerHTML = `🏆 Neste prazo, a <strong>LCI 90% do CDI</strong> rende <strong>${currencyFormatter.format(diff)}</strong> a mais devido à isenção de IR.`;
+            } else {
+                divVencedor.innerHTML = `🤝 Ambas as opções entregam exatamente o mesmo retorno líquido neste prazo.`;
+            }
+        }
+
+        // 3. Lógica do Simulador de Crescimento de Patrimônio com Gráfico
         function atualizarSimulacaoPatrimonio() {
             const initial = parseFloat(document.getElementById('sim-initial').value) || 0;
             const monthly = parseFloat(document.getElementById('sim-monthly').value) || 0;
@@ -318,6 +418,7 @@
 
         window.onload = function() {
             calcularRendaFixa();
+            calcularComparativoIR();
             atualizarSimulacaoPatrimonio();
             lucide.createIcons();
         };
